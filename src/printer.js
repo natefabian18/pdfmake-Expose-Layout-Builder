@@ -724,4 +724,42 @@ function createPatterns(patternDefinitions, pdfKitDoc) {
 	return patterns;
 }
 
+PdfPrinter.prototype.ExposeLayoutBuilder = function (docDefinition, options) {
+	options = options || {};
+
+	docDefinition.version = docDefinition.version || '1.3';
+	docDefinition.compress = isBoolean(docDefinition.compress) ? docDefinition.compress : true;
+	docDefinition.images = docDefinition.images || {};
+	docDefinition.pageMargins = ((docDefinition.pageMargins !== undefined) && (docDefinition.pageMargins !== null)) ? docDefinition.pageMargins : 40;
+
+	var pageSize = fixPageSize(docDefinition.pageSize, docDefinition.pageOrientation);
+
+	var pdfOptions = {
+		size: [pageSize.width, pageSize.height],
+		pdfVersion: docDefinition.version,
+		compress: docDefinition.compress,
+		userPassword: docDefinition.userPassword,
+		ownerPassword: docDefinition.ownerPassword,
+		permissions: docDefinition.permissions,
+		fontLayoutCache: isBoolean(options.fontLayoutCache) ? options.fontLayoutCache : true,
+		bufferPages: options.bufferPages || false,
+		autoFirstPage: false,
+		info: createMetadata(docDefinition),
+		font: null
+	};
+
+	this.pdfKitDoc = PdfKitEngine.createPdfDocument(pdfOptions);
+
+	this.fontProvider = new FontProvider(this.fontDescriptors, this.pdfKitDoc);
+
+	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins), new ImageMeasure(this.pdfKitDoc, docDefinition.images), new SVGMeasure());
+
+	registerDefaultTableLayouts(builder);
+	if (options.tableLayouts) {
+		builder.registerTableLayouts(options.tableLayouts);
+	}
+
+	return builder;
+};
+
 module.exports = PdfPrinter;
