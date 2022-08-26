@@ -741,6 +741,11 @@ PdfPrinter.prototype.ExposeLayoutBuilder = function (docDefinition, options) {
 		builder.registerTableLayouts(options.tableLayouts);
 	}
 
+	builder.layoutDocument(docDefinition.content, this.fontProvider, docDefinition.styles || {}, docDefinition.defaultStyle || {
+		fontSize: 12,
+		font: 'Roboto'
+	}, docDefinition.background, docDefinition.header, docDefinition.footer, docDefinition.images, docDefinition.watermark, docDefinition.pageBreakBefore);
+
 	return builder;
 };
 
