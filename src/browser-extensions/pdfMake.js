@@ -2,7 +2,8 @@
 
 var isFunction = require('../helpers').isFunction;
 var isUndefined = require('../helpers').isUndefined;
-var isNull = require('../helpers').isNull;
+//var isNull = require('../helpers').isNull;
+var pack = require('../helpers').pack;
 var FileSaver = require('file-saver');
 var saveAs = FileSaver.saveAs;
 
@@ -15,6 +16,10 @@ var defaultClientFonts = {
 	}
 };
 
+var globalVfs;
+var globalFonts;
+var globalTableLayouts;
+
 function Document(docDefinition, tableLayouts, fonts, vfs) {
 	this.docDefinition = docDefinition;
 	this.tableLayouts = tableLayouts || null;
@@ -25,13 +30,13 @@ function Document(docDefinition, tableLayouts, fonts, vfs) {
 function canCreatePdf() {
 	// Ensure the browser provides the level of support needed
 	try {
-		var arr = new Uint8Array(1)
-		var proto = { foo: function () { return 42 } }
-		Object.setPrototypeOf(proto, Uint8Array.prototype)
-		Object.setPrototypeOf(arr, proto)
-		return arr.foo() === 42
+		var arr = new Uint8Array(1);
+		var proto = { foo: function () { return 42; } };
+		Object.setPrototypeOf(proto, Uint8Array.prototype);
+		Object.setPrototypeOf(arr, proto);
+		return arr.foo() === 42;
 	} catch (e) {
-		return false
+		return false;
 	}
 }
 
@@ -66,24 +71,48 @@ Document.prototype._createDoc = function (options, cb) {
 	for (var font in this.fonts) {
 		if (this.fonts.hasOwnProperty(font)) {
 			if (this.fonts[font].normal) {
-				var url = getExtendedUrl(this.fonts[font].normal);
-				urlResolver.resolve(url.url, url.headers);
-				this.fonts[font].normal = url.url;
+				if (Array.isArray(this.fonts[font].normal)) { // TrueType Collection
+					var url = getExtendedUrl(this.fonts[font].normal[0]);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].normal[0] = url.url;
+				} else {
+					var url = getExtendedUrl(this.fonts[font].normal);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].normal = url.url;
+				}
 			}
 			if (this.fonts[font].bold) {
-				var url = getExtendedUrl(this.fonts[font].bold);
-				urlResolver.resolve(url.url, url.headers);
-				this.fonts[font].bold = url.url;
+				if (Array.isArray(this.fonts[font].bold)) { // TrueType Collection
+					var url = getExtendedUrl(this.fonts[font].bold[0]);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].bold[0] = url.url;
+				} else {
+					var url = getExtendedUrl(this.fonts[font].bold);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].bold = url.url;
+				}
 			}
 			if (this.fonts[font].italics) {
-				var url = getExtendedUrl(this.fonts[font].italics);
-				urlResolver.resolve(url.url, url.headers);
-				this.fonts[font].italics = url.url;
+				if (Array.isArray(this.fonts[font].italics)) { // TrueType Collection
+					var url = getExtendedUrl(this.fonts[font].italics[0]);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].italics[0] = url.url;
+				} else {
+					var url = getExtendedUrl(this.fonts[font].italics);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].italics = url.url;
+				}
 			}
 			if (this.fonts[font].bolditalics) {
-				var url = getExtendedUrl(this.fonts[font].bolditalics);
-				urlResolver.resolve(url.url, url.headers);
-				this.fonts[font].bolditalics = url.url;
+				if (Array.isArray(this.fonts[font].bolditalics)) { // TrueType Collection
+					var url = getExtendedUrl(this.fonts[font].bolditalics[0]);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].bolditalics[0] = url.url;
+				} else {
+					var url = getExtendedUrl(this.fonts[font].bolditalics);
+					urlResolver.resolve(url.url, url.headers);
+					this.fonts[font].bolditalics = url.url;
+				}
 			}
 		}
 	}
@@ -297,9 +326,30 @@ module.exports = {
 		}
 		return new Document(
 			docDefinition,
-			tableLayouts || global.pdfMake.tableLayouts,
-			fonts || global.pdfMake.fonts,
-			vfs || global.pdfMake.vfs
+			tableLayouts || globalTableLayouts || global.pdfMake.tableLayouts,
+			fonts || globalFonts || global.pdfMake.fonts,
+			vfs || globalVfs || global.pdfMake.vfs
 		);
+	},
+	addVirtualFileSystem: function (vfs) {
+		globalVfs = vfs;
+	},
+	addFonts: function (fonts) {
+		globalFonts = pack(globalFonts, fonts);
+	},
+	setFonts: function (fonts) {
+		globalFonts = fonts;
+	},
+	clearFonts: function () {
+		globalFonts = undefined;
+	},
+	addTableLayouts: function (tableLayouts) {
+		globalTableLayouts = pack(globalTableLayouts, tableLayouts);
+	},
+	setTableLayouts: function (tableLayouts) {
+		globalTableLayouts = tableLayouts;
+	},
+	clearTableLayouts: function () {
+		globalTableLayouts = undefined;
 	}
 };

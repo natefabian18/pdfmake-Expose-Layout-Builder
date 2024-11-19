@@ -53,8 +53,13 @@ module.exports = {
 				}
 			},
 			{
+				enforce: "pre",
+				test: /\.(cjs|js)$/,
+				use: ["source-map-loader"],
+			},
+			{
 				test: /\.js$/,
-				include: /(pdfkit|linebreak|fontkit|saslprep|restructure|unicode-trie|unicode-properties|dfa|buffer|png-js|crypto-js)/,
+				include: /(layoutBuilder|pdfkit|linebreak|fontkit|saslprep|restructure|unicode-trie|unicode-properties|dfa|buffer|png-js|crypto-js)/,
 				use: {
 					loader: 'babel-loader',
 					options: {
@@ -106,6 +111,13 @@ module.exports = {
 				}
 			},
 
+			{
+				enforce: 'post',
+				test: /pdfkit[/\\]js[/\\]pdfkit.es.js$/,
+				use: {
+					loader: "transform-loader?brfs"
+				}
+			},
 			{
 				enforce: 'post',
 				test: /fontkit[/\\]index.js$/,

@@ -61,12 +61,17 @@ URLBrowserResolver.prototype.resolve = function (url, headers) {
 		var _this = this;
 		this.resolving[url] = new Promise(function (resolve, reject) {
 			if (url.toLowerCase().indexOf('https://') === 0 || url.toLowerCase().indexOf('http://') === 0) {
-				fetchUrl(url, headers).then(function (buffer) {
-					_this.fs.writeFileSync(url, buffer);
+				if (_this.fs.existsSync(url)) {
+					// url was downloaded earlier
 					resolve();
-				}, function (result) {
-					reject(result);
-				});
+				} else {
+					fetchUrl(url, headers).then(function (buffer) {
+						_this.fs.writeFileSync(url, buffer);
+						resolve();
+					}, function (result) {
+						reject(result);
+					});
+				}
 			} else {
 				// cannot be resolved
 				resolve();
@@ -75,7 +80,7 @@ URLBrowserResolver.prototype.resolve = function (url, headers) {
 	}
 
 	return this.resolving[url];
-}
+};
 
 URLBrowserResolver.prototype.resolved = function () {
 	var _this = this;
@@ -86,6 +91,6 @@ URLBrowserResolver.prototype.resolved = function () {
 			reject(result);
 		});
 	});
-}
+};
 
 module.exports = URLBrowserResolver;
